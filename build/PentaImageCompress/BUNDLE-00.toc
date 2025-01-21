@@ -1,0 +1,3 @@
+([('PentaImageCompress',
+   '/Users/penta/Desktop/compressorApp/compressApp/dist/PentaImageCompress',
+   'EXECUTABLE')],)
