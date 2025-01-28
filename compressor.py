@@ -3,7 +3,7 @@ from PIL import Image
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QPushButton, QFileDialog, 
                             QVBoxLayout, QHBoxLayout, QLabel, QSpinBox, 
                             QComboBox, QProgressBar, QMessageBox, QGroupBox, 
-                            QGridLayout)
+                            QGridLayout, QListWidget, QMenu)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 
@@ -33,15 +33,15 @@ class ImageCompressor(QMainWindow):
         button_layout.setSpacing(5)
         
         # Giriş butonu
-        input_button = QPushButton("Giriş Klasörü Seç")
-        input_button.setFixedHeight(30)
+        self.input_button = QPushButton("Giriş Klasörü Seç")
+        self.input_button.setFixedHeight(30)
         
         # Çıkış butonu
-        output_button = QPushButton("Çıkış Klasörü Seç")
-        output_button.setFixedHeight(30)
+        self.output_button = QPushButton("Çıkış Klasörü Seç")
+        self.output_button.setFixedHeight(30)
         
-        button_layout.addWidget(input_button)
-        button_layout.addWidget(output_button)
+        button_layout.addWidget(self.input_button)
+        button_layout.addWidget(self.output_button)
         folder_container.addLayout(button_layout)
         
         # Seçilen klasör etiketleri
@@ -60,6 +60,22 @@ class ImageCompressor(QMainWindow):
         folder_layout.addLayout(folder_container)
         folder_group.setLayout(folder_layout)
         layout.addWidget(folder_group)
+        
+        # Dosya listesi bölümü
+        self.file_list = QListWidget()
+        self.file_list.setSelectionMode(QListWidget.MultiSelection)
+        layout.addWidget(QLabel("Sıkıştırılacak Dosyalar:"))
+        layout.addWidget(self.file_list)
+        
+        # Dosya işlem butonları
+        file_actions = QHBoxLayout()
+        self.undo_button = QPushButton("Geri Al")
+        self.remove_button = QPushButton("Seçili Dosyaları Çıkar")
+        self.sort_button = QPushButton("Dosyaları Sırala")
+        file_actions.addWidget(self.undo_button)
+        file_actions.addWidget(self.remove_button)
+        file_actions.addWidget(self.sort_button)
+        layout.addLayout(file_actions)
         
         # Ayarlar grubu
         settings_group = QGroupBox("Sıkıştırma Ayarları")
@@ -106,8 +122,11 @@ class ImageCompressor(QMainWindow):
         layout.addWidget(self.progress_bar)
         
         # Buton bağlantıları
-        input_button.clicked.connect(self.select_input_folder)
-        output_button.clicked.connect(self.select_output_folder)
+        self.input_button.clicked.connect(self.select_input_folder)
+        self.output_button.clicked.connect(self.select_output_folder)
+        self.undo_button.clicked.connect(self.undo_removal)
+        self.remove_button.clicked.connect(self.remove_selected_files)
+        self.sort_button.clicked.connect(self.sort_files)
         compress_button.clicked.connect(self.compress_images)
         
         # Başlangıç değerlerini ayarla
@@ -116,12 +135,17 @@ class ImageCompressor(QMainWindow):
         
         # Pencere boyutu
         self.setFixedSize(380, 400)
+        
+        # Geri alma işlemi için geçmiş listesi
+        self.removed_files = []
 
     def select_input_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Giriş Klasörü Seç")
         if folder:
             self.input_folder = folder
             self.input_folder_label.setText(f"Giriş: {os.path.basename(folder)}")
+            self.refresh_file_list()
+            self.removed_files.clear()  # Yeni klasör seçildiğinde geçmişi temizle
 
     def select_output_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Çıkış Klasörü Seç")
@@ -129,35 +153,94 @@ class ImageCompressor(QMainWindow):
             self.output_folder = folder
             self.output_folder_label.setText(f"Çıkış: {os.path.basename(folder)}")
 
+    def refresh_file_list(self):
+        if not self.input_folder:
+            return
+        
+        self.file_list.clear()
+        for file in os.listdir(self.input_folder):
+            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
+                self.file_list.addItem(file)
+
+    def remove_selected_files(self):
+        selected_items = self.file_list.selectedItems()
+        # Silinen öğeleri geçmişe kaydet
+        for item in selected_items:
+            self.removed_files.append({
+                'text': item.text(),
+                'index': self.file_list.row(item)
+            })
+            self.file_list.takeItem(self.file_list.row(item))
+
+    def undo_removal(self):
+        if not self.removed_files:
+            QMessageBox.information(self, "Bilgi", "Geri alınacak işlem bulunmuyor!")
+            return
+        
+        # En son silinen öğeyi geri al
+        last_removed = self.removed_files.pop()
+        self.file_list.insertItem(last_removed['index'], last_removed['text'])
+
+    def sort_files(self):
+        # Sıralama seçenekleri için bir menü göster
+        menu = QMenu(self)
+        menu.addAction("A-Z", lambda: self.perform_sort(reverse=False))
+        menu.addAction("Z-A", lambda: self.perform_sort(reverse=True))
+        menu.addAction("Boyuta Göre (Büyükten Küçüğe)", lambda: self.perform_sort_by_size(reverse=True))
+        menu.addAction("Boyuta Göre (Küçükten Büyüğe)", lambda: self.perform_sort_by_size(reverse=False))
+        
+        # Menüyü butonun altında göster
+        menu.exec_(self.sort_button.mapToGlobal(self.sort_button.rect().bottomLeft()))
+
+    def perform_sort(self, reverse=False):
+        items = []
+        for i in range(self.file_list.count()):
+            items.append(self.file_list.item(i).text())
+        
+        items.sort(reverse=reverse)
+        self.file_list.clear()
+        self.file_list.addItems(items)
+
+    def perform_sort_by_size(self, reverse=False):
+        items = []
+        for i in range(self.file_list.count()):
+            file_name = self.file_list.item(i).text()
+            file_path = os.path.join(self.input_folder, file_name)
+            file_size = os.path.getsize(file_path)
+            items.append((file_name, file_size))
+        
+        items.sort(key=lambda x: x[1], reverse=reverse)
+        self.file_list.clear()
+        self.file_list.addItems([item[0] for item in items])
+
     def compress_images(self):
         if not self.input_folder or not self.output_folder:
             QMessageBox.warning(self, "Uyarı", "Lütfen giriş ve çıkış klasörlerini seçin!")
             return
         
-        # Görüntü dosyalarını bul
+        # Sadece listede kalan dosyaları işle
         image_files = []
-        for file in os.listdir(self.input_folder):
-            if file.lower().endswith(('.png', '.jpg', '.jpeg', '.webp')):
-                image_files.append(os.path.join(self.input_folder, file))
+        for i in range(self.file_list.count()):
+            file_name = self.file_list.item(i).text()
+            image_files.append(os.path.join(self.input_folder, file_name))
         
         if not image_files:
-            QMessageBox.warning(self, "Uyarı", "Seçilen klasörde görüntü dosyası bulunamadı!")
+            QMessageBox.warning(self, "Uyarı", "İşlenecek görüntü dosyası bulunamadı!")
             return
         
-        # Progress bar'ı ayarla
         self.progress_bar.setMaximum(len(image_files))
         self.progress_bar.setValue(0)
         
-        error_shown = False  # Hata mesajı bayrağı
+        error_shown = False
         
-        # Her görüntüyü işle
         for i, image_path in enumerate(image_files):
             try:
                 # Görüntüyü aç
                 img = Image.open(image_path)
+                output_format = self.format_combo.currentText().lower()
                 
-                # RGBA modundaki görüntüleri RGB'ye dönüştür
-                if img.mode == 'RGBA':
+                # RGBA'dan RGB'ye dönüşümü sadece JPEG için yap
+                if output_format == 'jpeg' and img.mode == 'RGBA':
                     img = img.convert('RGB')
                 
                 # Boyut ayarla
@@ -168,7 +251,6 @@ class ImageCompressor(QMainWindow):
                     img = img.resize(new_size, Image.Resampling.LANCZOS)
                 
                 # Çıktı dosya adını oluştur
-                output_format = self.format_combo.currentText().lower()
                 base_name = os.path.splitext(os.path.basename(image_path))[0]
                 output_path = os.path.join(self.output_folder, f"{base_name}.{output_format}")
                 
@@ -177,9 +259,8 @@ class ImageCompressor(QMainWindow):
                     output_format = 'jpeg'
                 img.save(output_path, output_format, quality=self.quality_spinbox.value())
                 
-                # Progress bar'ı güncelle
                 self.progress_bar.setValue(i + 1)
-                QApplication.processEvents()  # Arayüzü güncellemek için
+                QApplication.processEvents()
                 
             except Exception as e:
                 if not error_shown:

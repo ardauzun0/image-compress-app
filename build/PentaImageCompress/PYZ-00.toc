@@ -1,4 +1,4 @@
-('/Users/penta/Desktop/compressorApp/compressApp/build/PentaImageCompress/PYZ-00.pyz',
+('/Users/penta/Desktop/compress-image-app/build/PentaImageCompress/PYZ-00.pyz',
  [('PIL',
    '/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/site-packages/PIL/__init__.py',
    'PYMODULE'),
