@@ -1,3 +1,4 @@
+import platform
 import os
 from PIL import Image
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QPushButton, QFileDialog, 
@@ -10,7 +11,38 @@ from PyQt5.QtGui import QIcon
 class ImageCompressor(QMainWindow):
     def __init__(self):
         super().__init__()
-        
+        self.os_type = platform.system()  # İşletim sistemini belirle
+        self.setup_ui()
+        self.init_window()
+
+    def init_window(self):
+        if self.os_type == 'Darwin':  # macOS
+            self.setMinimumSize(600, 400)
+            self.setWindowTitle("ImageCompressor")
+        elif self.os_type == 'Windows':
+            self.setMinimumSize(620, 420)  # Windows için biraz daha büyük
+            self.setWindowTitle("ImageCompressor")
+            # Windows özel stil
+            self.setStyleSheet("""
+                QMainWindow {
+                    background-color: #f0f0f0;
+                }
+                QPushButton {
+                    padding: 5px;
+                    background-color: #e0e0e0;
+                    border: 1px solid #c0c0c0;
+                    border-radius: 3px;
+                    min-height: 25px;
+                }
+                QPushButton:hover {
+                    background-color: #d0d0d0;
+                }
+                QListWidget {
+                    border: 1px solid #c0c0c0;
+                }
+            """)
+
+    def setup_ui(self):
         # Ana widget'ı oluştur
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -133,19 +165,21 @@ class ImageCompressor(QMainWindow):
         self.input_folder = ""
         self.output_folder = ""
         
-        # Pencere boyutu
-        self.setFixedSize(380, 400)
-        
         # Geri alma işlemi için geçmiş listesi
         self.removed_files = []
 
     def select_input_folder(self):
-        folder = QFileDialog.getExistingDirectory(self, "Giriş Klasörü Seç")
+        if self.os_type == 'Darwin':
+            folder = QFileDialog.getExistingDirectory(self, "Giriş Klasörü Seç")
+        else:
+            folder = QFileDialog.getExistingDirectory(self, "Giriş Klasörü Seç", "", 
+                QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
+        
         if folder:
             self.input_folder = folder
             self.input_folder_label.setText(f"Giriş: {os.path.basename(folder)}")
             self.refresh_file_list()
-            self.removed_files.clear()  # Yeni klasör seçildiğinde geçmişi temizle
+            self.removed_files.clear()
 
     def select_output_folder(self):
         folder = QFileDialog.getExistingDirectory(self, "Çıkış Klasörü Seç")
@@ -205,7 +239,7 @@ class ImageCompressor(QMainWindow):
         items = []
         for i in range(self.file_list.count()):
             file_name = self.file_list.item(i).text()
-            file_path = os.path.join(self.input_folder, file_name)
+            file_path = os.path.normpath(os.path.join(self.input_folder, file_name))
             file_size = os.path.getsize(file_path)
             items.append((file_name, file_size))
         
@@ -218,11 +252,12 @@ class ImageCompressor(QMainWindow):
             QMessageBox.warning(self, "Uyarı", "Lütfen giriş ve çıkış klasörlerini seçin!")
             return
         
-        # Sadece listede kalan dosyaları işle
+        # Windows için dosya yolu işleme
         image_files = []
         for i in range(self.file_list.count()):
             file_name = self.file_list.item(i).text()
-            image_files.append(os.path.join(self.input_folder, file_name))
+            # Windows için dosya yolu ayırıcıyı düzelt
+            image_files.append(os.path.normpath(os.path.join(self.input_folder, file_name)))
         
         if not image_files:
             QMessageBox.warning(self, "Uyarı", "İşlenecek görüntü dosyası bulunamadı!")
@@ -235,7 +270,6 @@ class ImageCompressor(QMainWindow):
         
         for i, image_path in enumerate(image_files):
             try:
-                # Görüntüyü aç
                 img = Image.open(image_path)
                 output_format = self.format_combo.currentText().lower()
                 
@@ -250,9 +284,9 @@ class ImageCompressor(QMainWindow):
                     new_size = tuple([int(x*ratio) for x in img.size])
                     img = img.resize(new_size, Image.Resampling.LANCZOS)
                 
-                # Çıktı dosya adını oluştur
+                # Çıktı dosya yolunu işletim sistemine göre oluştur
                 base_name = os.path.splitext(os.path.basename(image_path))[0]
-                output_path = os.path.join(self.output_folder, f"{base_name}.{output_format}")
+                output_path = os.path.normpath(os.path.join(self.output_folder, f"{base_name}.{output_format}"))
                 
                 # Kaydet
                 if output_format == 'jpg':

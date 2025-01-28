@@ -1,12 +1,12 @@
-# PentaImageCompress
+# ImageCompressor
 
-PentaImageCompress is a simple desktop application used for compressing image files. This project was developed by Arda Uzun.
+ImageCompressor is a simple desktop application used for compressing image files. This project was developed by Arda Uzun.
 
 ## Features
 
 - Image file compression
 - Multi-language support (with Qt translations)
-- Compatible with MacOS
+- Compatible with MacOS and Windows
 - User-friendly interface
 
 ## Technical Details
@@ -18,11 +18,13 @@ PentaImageCompress is a simple desktop application used for compressing image fi
 ## Supported Platforms
 
 - MacOS
+- Windows
 
 ## Installation
 
 1. Download the application
-2. Drag the PentaImageCompress.app file to the Applications folder
+2. For MacOS: Drag the ImageCompressor.app file to the Applications folder
+   For Windows: Run the installer and follow the instructions
 3. Run the application
 
 ### Required Dependencies

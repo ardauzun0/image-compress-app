@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='PentaImageCompress',
+    name='ImageCompressor',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -35,12 +35,12 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='penta-compressor.icns' 
+    icon='ImageCompressor.icns' 
 )
 
 app = BUNDLE(
     exe,
-    name='PentaImageCompress.app',
-    icon='penta-compressor.icns',
+    name='ImageCompressor.app',
+    icon='ImageCompressor.icns',
     bundle_identifier=None,
 )

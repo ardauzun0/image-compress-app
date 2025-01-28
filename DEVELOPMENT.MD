@@ -1,4 +1,4 @@
-# PentaImageCompress Geliştirici Dokümantasyonu
+# ImageCompressor Geliştirici Dokümantasyonu
 
 ## İçindekiler
 
@@ -54,9 +54,9 @@
 ### Kod Yapısı
 
 - `compressor.py`: Ana uygulama kodu
-- `PentaImageCompress.spec`: PyInstaller yapılandırması
+- `ImageCompressor.spec`: PyInstaller yapılandırması
 - `requirements.txt`: Bağımlılıklar
-- `penta-compressor.icns`: Uygulama ikonu
+- `ImageCompressor.icns`: Uygulama ikonu
 
 ## 3. Build
 
@@ -68,7 +68,7 @@
    ```
 2. PyInstaller ile build al:
    ```
-   pyinstaller PentaImageCompress.spec
+   pyinstaller ImageCompressor.spec
    ```
 3. Gereksiz dosyaları temizle:
    ```
@@ -117,15 +117,15 @@
 
 1. Son build'i al:
    ```
-   pyinstaller PentaImageCompress.spec
+   pyinstaller ImageCompressor.spec
    ```
 2. Uygulamayı test et:
    ```
-   open dist/PentaImageCompress.app
+   open dist/ImageCompressor.app
    ```
 3. Applications klasörüne kopyala:
    ```
-   cp -r dist/PentaImageCompress.app /Applications/
+   cp -r dist/ImageCompressor.app /Applications/
    ```
 
 ## 6. Sorun Giderme
@@ -152,13 +152,13 @@
 3. Uygulama Açılmama Sorunu:
    ```bash
    # Terminal'den hata mesajlarını görmek için:
-   ./dist/PentaImageCompress.app/Contents/MacOS/PentaImageCompress
+   ./dist/ImageCompressor.app/Contents/MacOS/ImageCompressor
    
    # İzin hatası varsa:
-   chmod +x dist/PentaImageCompress.app/Contents/MacOS/PentaImageCompress
+   chmod +x dist/ImageCompressor.app/Contents/MacOS/ImageCompressor
    
    # Quarantine (Karantina) özelliğini kaldırmak için:
-   xattr -cr dist/PentaImageCompress.app
+   xattr -cr dist/ImageCompressor.app
    ```
 
 4. Build Sorunları:
@@ -168,12 +168,12 @@
    rm -rf __pycache__
    rm -f .DS_Store
    rm -rf build dist
-   pyinstaller PentaImageCompress.spec
-   chmod +x dist/PentaImageCompress.app/Contents/MacOS/PentaImageCompress
-   xattr -cr dist/PentaImageCompress.app
+   pyinstaller ImageCompressor.spec
+   chmod +x dist/ImageCompressor.app/Contents/MacOS/ImageCompressor
+   xattr -cr dist/ImageCompressor.app
    
    # Yeniden build al:
-   pyinstaller PentaImageCompress.spec
+   pyinstaller ImageCompressor.spec
    ```
 
 ### Hata Ayıklama Adımları
